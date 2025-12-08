@@ -10,7 +10,7 @@ Sistema de detección de somnolencia en tiempo real con núcleo algorítmico en 
 
 **Universidad Nacional de Colombia - Sede Bogotá**
 **Asignatura:** Sistemas Embebidos
-**Año:** 2024
+**Año:** 2025
 
 ## Arquitectura
 

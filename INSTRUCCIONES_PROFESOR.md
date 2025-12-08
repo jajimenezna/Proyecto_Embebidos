@@ -10,7 +10,7 @@ Este repositorio contiene el proyecto completo "Detector de Somnolencia para Con
 - Miguel Alejandro Carvajal Medina
 - Daniel Sierra Peña
 
-Universidad Nacional de Colombia - Sede Bogotá, 2024
+Universidad Nacional de Colombia - Sede Bogotá, 2025
 
 ## Estructura del Proyecto
 ```

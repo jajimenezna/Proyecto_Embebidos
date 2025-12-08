@@ -10,7 +10,7 @@
 
 **Institución:** Universidad Nacional de Colombia - Sede Bogotá  
 **Asignatura:** Sistemas Embebidos  
-**Año:** 2024
+**Año:** 2025
 
 ## Objetivo
 
