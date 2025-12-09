@@ -1,6 +1,6 @@
 # Detector de Somnolencia para Conductores
 
-Sistema de detección de somnolencia en tiempo real con núcleo algorítmico en C puro, implementado sobre hardware MaixCAM (RISC-V 64-bit).
+Sistema de detección de somnolencia en tiempo real con algoritmo completo implementado en C puro sobre hardware MaixCAM (RISC-V 64-bit).
 
 ## Autores
 
@@ -12,21 +12,82 @@ Sistema de detección de somnolencia en tiempo real con núcleo algorítmico en 
 **Asignatura:** Sistemas Embebidos
 **Año:** 2025
 
+## Distribución del Código
+
+**Balance Final: C 80% | Python 20%**
+
+### Algoritmo Completo en C (366 líneas - 80%)
+**Archivo:** `src/drowsiness_c.c`
+
+Implementación completa:
+- Cálculo de Eye Aspect Ratio (EAR) y Mouth Aspect Ratio (MAR)
+- Análisis geométrico de landmarks
+- Clasificación de eventos (parpadeos normales, largos, microsueños, bostezos)
+- Sistema de análisis temporal con contadores
+- Evaluación de nivel de peligro con 3 estados
+- Sistema de decaimiento progresivo
+- Generación de comandos de renderizado
+
+### Wrapper Mínimo de Hardware (91 líneas - 20%)
+**Archivos:** `python/drowsiness_detector/main.py` (64 líneas), `python/menu_selector/main.py` (27 líneas)
+
+Funciones exclusivas de acceso a hardware propietario:
+- Inicialización de subsistemas Cvitek (ISP, TPU, VO)
+- Captura de frames desde cámara
+- Ejecución de YOLO y Landmarks en TPU (aceleración hardware)
+- Paso de datos a funciones C mediante ctypes
+- Renderizado básico en display
+
+**Líneas de algoritmo en Python: 0**
+
+## Justificación Técnica
+
+### Hardware Propietario
+
+El SoC Sophgo SG2002 utiliza subsistemas propietarios Cvitek sin drivers estándar V4L2. El acceso requiere APIs de MaixPy, haciendo inevitable el uso mínimo de Python.
+
+### Optimización Realizada
+
+El código Python se redujo al mínimo absoluto:
+- **Antes:** 207 líneas (53%)
+- **Después:** 91 líneas (20%)
+- **Reducción:** 56% menos Python
+
+Todo el procesamiento inteligente permanece en C puro.
+
 ## Arquitectura
+```
+Hardware (Cvitek) → Python (wrapper 20%) → C (algoritmo 80%) → Resultado
+```
 
-El sistema se estructura en tres capas:
+## Métricas de Detección
 
-### Hardware (MaixCAM SG2002)
-- Procesador: RISC-V 64-bit @ 1GHz
-- Cámara: GC4653 (640x480 @ 30 FPS)
-- TPU: Acelerador neural
-- Display: LCD 480x640
+### Eye Aspect Ratio (EAR)
+```
+EAR = distancia_vertical / distancia_horizontal
+```
+Umbral: EAR < 0.18 indica ojos cerrados
 
-### Capa de Hardware (Python - 29%)
-Responsabilidad: Acceso a subsistemas propietarios Cvitek
+### Mouth Aspect Ratio (MAR)
+```
+MAR = distancia_vertical / distancia_horizontal
+```
+Umbral: MAR > 0.70 indica bostezo
 
-### Núcleo Algorítmico (C Puro - 71%)
-Responsabilidad: Análisis completo de somnolencia
+### Clasificación de Eventos
+
+| Evento | Criterio | Acción |
+|--------|----------|--------|
+| Parpadeo Normal | < 1.0 seg | +2% somnolencia |
+| Parpadeo Largo | 1.0-2.5 seg | +15% somnolencia |
+| Microsueño | > 2.5 seg | +40% somnolencia |
+| Bostezo | MAR > 0.70 | +10% somnolencia |
+
+### Niveles de Alerta
+
+- **Nivel 0 (0-59%):** Conducción segura
+- **Nivel 1 (60-79%):** Descanso necesario
+- **Nivel 2 (80-100%):** Detener vehículo
 
 ## Compilación
 ```bash
@@ -34,6 +95,8 @@ mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-riscv64.cmake ..
 make -j4
 ```
+
+**Salida:** `libdrowsiness.so` (ELF 64-bit RISC-V)
 
 ## Deployment
 ```bash
@@ -44,22 +107,3 @@ cd deployment
 ## Licencia
 
 MIT License
-
-## Optimización del Código
-
-### Versión Final
-- **C:** 366 líneas (80%)
-  - Algoritmo completo de somnolencia: 187 líneas
-  - Funciones extendidas de análisis: 179 líneas
-- **Python:** 91 líneas (20%)
-  - Wrapper mínimo de hardware propietario: 64 líneas
-  - Menú de interfaz: 27 líneas
-
-### Python Minimizado
-El código Python se redujo al mínimo indispensable:
-- Inicialización de hardware (cámara, display, TPU)
-- Ejecución de YOLO y Landmarks en TPU
-- Paso de datos a funciones C
-- Renderizado básico de resultados
-
-**Todo el algoritmo inteligente permanece en C.**
