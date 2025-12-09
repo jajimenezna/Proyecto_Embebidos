@@ -44,3 +44,22 @@ cd deployment
 ## Licencia
 
 MIT License
+
+## Optimización del Código
+
+### Versión Final
+- **C:** 366 líneas (80%)
+  - Algoritmo completo de somnolencia: 187 líneas
+  - Funciones extendidas de análisis: 179 líneas
+- **Python:** 91 líneas (20%)
+  - Wrapper mínimo de hardware propietario: 64 líneas
+  - Menú de interfaz: 27 líneas
+
+### Python Minimizado
+El código Python se redujo al mínimo indispensable:
+- Inicialización de hardware (cámara, display, TPU)
+- Ejecución de YOLO y Landmarks en TPU
+- Paso de datos a funciones C
+- Renderizado básico de resultados
+
+**Todo el algoritmo inteligente permanece en C.**
