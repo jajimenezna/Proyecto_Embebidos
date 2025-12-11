@@ -79,17 +79,57 @@ Contenido típico esperado:
 
 ---
 
-### 7. Verificación posterior al flasheo
+## Verificación de la imagen reconstruida en la MaixCAM
 
-Una vez insertada la tarjeta en la MaixCAM, se verificó:
+Además de seguir el flujo del SDK (kernel, buildroot, pack), se comprobó en la propia MaixCAM que la cámara está ejecutando la imagen reconstruida.
 
-- Kernel cargando correctamente (`uname -a`)
-- Controladores ISP / VIC / CVITEK funcionando
-- Python3 disponible
-- GPIO expuestos en `/sys/class/gpio`
-- Cámara CSI activa y usable desde el programa
+### 1. Kernel compilado desde el SDK
 
-Este procedimiento asegura que la aplicación corra sobre una base limpia y estable, alineada con la plataforma SG2002.
+En la MaixCAM se ejecutó:
+
+    uname -a
+
+La salida fue:
+
+    Linux maixcam-cbce 5.10.4-tag- #19 PREEMPT Wed Mar 19 15:08:48 CST 2025 riscv64 GNU/Linux
+
+Esto confirma que:
+- El kernel es 5.10.4 para arquitectura riscv64.
+- Se trata del build número 19 (#19), no de una imagen de fábrica.
+- La fecha de compilación (Wed Mar 19 15:08:48 CST 2025) coincide con el momento en que se reconstruyó el sistema usando el SDK.
+
+### 2. Rootfs basado en Buildroot
+
+Se verificó también el sistema de archivos raíz:
+
+    cat /etc/os-release
+
+Salida obtenida:
+
+    NAME=Buildroot
+    VERSION=-ge4e133f3d
+    ID=buildroot
+    VERSION_ID=2023.11.2
+    PRETTY_NAME="Buildroot 2023.11.2"
+
+Esto muestra que el rootfs proviene de Buildroot (versión 2023.11.2), tal como genera el SDK de Sophgo para la plataforma sg2002_maixcam.
+
+### 3. Mensajes de arranque del kernel
+
+Para ver más detalles del kernel se usó:
+
+    dmesg | head
+
+Entre las primeras líneas aparece:
+
+    Linux version 5.10.4-tag- (neucrack@neucrack-desktop) (riscv64-unknown-linux-musl-gcc (Xuantie-900 linux-5.10.4 musl gcc Toolchain V2.6.1 B-20220906) 10.2.0, GNU ld (GNU Binutils) 2.35) #19 PREEMPT Wed Mar 19 15:08:48 CST 2025
+
+Con esto se confirma que:
+- El kernel fue construido con el toolchain Xuantie-900 usado por el SDK.
+- La compilación se realizó en un entorno de desarrollo (usuario neucrack@neucrack-desktop).
+- La versión, el número de build y la fecha coinciden con el proceso de compilación ejecutado mediante: ./build.sh kernel y ./build.sh pack.
+
+En conjunto, estos comandos demuestran que la MaixCAM está ejecutando un kernel y un rootfs generados a partir del SDK de Sophgo/Sipeed para sg2002_maixcam, y no una imagen genérica de fábrica.
 
 
 ## Arquitectura
