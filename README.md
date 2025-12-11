@@ -88,6 +88,6 @@ Los modelos .mud deben estar en la cámara, por ejemplo en:
 
 ## Notas
 
-- Los umbrales de EAR/MAR se calibraron de forma empírica.
+- Los umbrales de EAR/MAR se fijaron tomando como referencia rangos típicos reportados en la literatura para ojos abiertos/cerrados y boca cerrada/abierta, y se verificaron con pruebas sobre el sistema.
 - La calidad de la detección depende de la iluminación y del uso de gafas.
 - Los GPIO están previstos para buzzer, LEDs y actuador háptico, pero el cableado depende del montaje físico.
