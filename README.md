@@ -13,6 +13,84 @@ La somnolencia al volante es un problema frecuente en conductores que manejan du
 
 La idea de este proyecto es aprovechar la MaixCAM Pro como plataforma embebida de bajo consumo para monitorear en tiempo real el rostro del conductor. A partir de la apertura de los ojos y de la boca, el sistema identifica patrones de parpadeo, microsueños y bostezos que se asocian con somnolencia. La meta no es solo “detectar una cara”, sino dar una señal clara de estado (normal, alerta o peligro) que pueda usarse para activar avisos sonoros, visuales o hápticos.
 
+## Primera etapa:
+
+## Compilación del SDK y generación de la imagen para MaixCAM Pro (SG2002)
+
+Para garantizar compatibilidad completa con el hardware SG2002 y asegurar un entorno limpio donde correr la aplicación de detección de somnolencia, se reconstruyó el sistema de la MaixCAM Pro usando el SDK oficial de Sophgo/Sipeed. Este proceso generó un kernel actualizado, un rootfs funcional y una imagen final lista para flashear.
+
+---
+
+### 1. Clonar el SDK de Sophgo/Sipeed
+
+    git clone https://github.com/sophgo/sophgo-sdk
+    cd sophgo-sdk
+
+---
+
+### 2. Configurar la plataforma SG2002 (MaixCAM)
+
+    ./build.sh lunch
+
+En el menú interactivo seleccionar:
+
+    sg2002_maixcam
+
+---
+
+### 3. Compilar el kernel
+
+    ./build.sh kernel
+
+Esto genera los archivos del kernel, device tree y módulos asociados.
+
+---
+
+### 4. Construir el root filesystem (Buildroot)
+
+    ./build.sh buildroot
+
+El rootfs resultante incluye Python3, controladores multimedia y dependencias necesarias para ejecutar modelos .mud y la librería en C.
+
+---
+
+### 5. Generar la imagen final
+
+    ./build.sh pack
+
+Los archivos producidos quedan en:
+
+    output/sg2002_maixcam/
+
+Contenido típico esperado:
+
+    full_image.img   → imagen completa para microSD
+    boot.sd          → partición de arranque
+    rootfs.sd        → sistema de archivos
+    kernel.bin       → kernel compilado
+    modules.tar.gz   → módulos del kernel
+
+---
+
+### 6. Flashear la imagen a la microSD
+
+    sudo dd if=full_image.img of=/dev/sdX bs=4M status=progress
+    sync
+
+---
+
+### 7. Verificación posterior al flasheo
+
+Una vez insertada la tarjeta en la MaixCAM, se verificó:
+
+- Kernel cargando correctamente (`uname -a`)
+- Controladores ISP / VIC / CVITEK funcionando
+- Python3 disponible
+- GPIO expuestos en `/sys/class/gpio`
+- Cámara CSI activa y usable desde el programa
+
+Este procedimiento asegura que la aplicación corra sobre una base limpia y estable, alineada con la plataforma SG2002.
+
 
 ## Arquitectura
 
