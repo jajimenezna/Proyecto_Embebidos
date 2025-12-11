@@ -1,11 +1,9 @@
 build/
-*.so
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
 *.o
-*.a
+*.so
 __pycache__/
 *.pyc
-.vscode/
-.idea/
-*.swp
-*.log
-.DS_Store

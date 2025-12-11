@@ -1,109 +1,93 @@
-# Detector de Somnolencia para Conductores
+# Detector de somnolencia en MaixCAM
 
-Sistema de detección de somnolencia en tiempo real con algoritmo completo implementado en C puro sobre hardware MaixCAM (RISC-V 64-bit).
+Proyecto de sistemas embebidos para detectar somnolencia en un conductor usando una MaixCAM Pro (LicheeRV Nano / SG2002, RISC-V).
 
-## Autores
-
-- Jaime Alfonso Jiménez Naranjo
-- Miguel Alejandro Carvajal Medina
-- Daniel Sierra Peña
-
-**Universidad Nacional de Colombia - Sede Bogotá**
-**Asignatura:** Sistemas Embebidos
-**Año:** 2025
-
-## Distribución del Código
-
-**Balance Final: C 80% | Python 20%**
-
-### Algoritmo Completo en C (366 líneas - 80%)
-**Archivo:** `src/drowsiness_c.c`
-
-Implementación completa:
-- Cálculo de Eye Aspect Ratio (EAR) y Mouth Aspect Ratio (MAR)
-- Análisis geométrico de landmarks
-- Clasificación de eventos (parpadeos normales, largos, microsueños, bostezos)
-- Sistema de análisis temporal con contadores
-- Evaluación de nivel de peligro con 3 estados
-- Sistema de decaimiento progresivo
-- Generación de comandos de renderizado
-
-### Wrapper Mínimo de Hardware (91 líneas - 20%)
-**Archivos:** `python/drowsiness_detector/main.py` (64 líneas), `python/menu_selector/main.py` (27 líneas)
-
-Funciones exclusivas de acceso a hardware propietario:
-- Inicialización de subsistemas Cvitek (ISP, TPU, VO)
-- Captura de frames desde cámara
-- Ejecución de YOLO y Landmarks en TPU (aceleración hardware)
-- Paso de datos a funciones C mediante ctypes
-- Renderizado básico en display
-
-**Líneas de algoritmo en Python: 0**
-
-## Justificación Técnica
-
-### Hardware Propietario
-
-El SoC Sophgo SG2002 utiliza subsistemas propietarios Cvitek sin drivers estándar V4L2. El acceso requiere APIs de MaixPy, haciendo inevitable el uso mínimo de Python.
-
-### Optimización Realizada
-
-El código Python se redujo al mínimo absoluto:
-- **Antes:** 207 líneas (53%)
-- **Después:** 91 líneas (20%)
-- **Reducción:** 56% menos Python
-
-Todo el procesamiento inteligente permanece en C puro.
+La cámara captura el rostro, se calculan métricas de ojos y boca y se estima un nivel de peligro. La parte crítica está en C (librería compartida) y Python se usa para integrar cámara, modelos y pantalla táctil.
 
 ## Arquitectura
-```
-Hardware (Cvitek) → Python (wrapper 20%) → C (algoritmo 80%) → Resultado
-```
 
-## Métricas de Detección
+- MaixCAM Pro con Linux 5.10.
+- Modelos .mud:
+  - retinaface.mud (detección de rostro + 5 puntos).
+  - face_landmarks.mud (landmarks faciales densos).
+- Librería C libdrowsiness.so:
+  - Cálculo de EAR (ojos) y MAR (boca).
+  - Contadores de parpadeos y bostezos.
+  - Nivel de peligro: 0 (normal), 1 (alerta), 2 (peligro).
+- Script Python detector_final_hybrid.py:
+  - Captura video.
+  - Ejecuta modelos.
+  - Llama a la librería C.
+  - Dibuja overlay y maneja la pantalla táctil.
 
-### Eye Aspect Ratio (EAR)
-```
-EAR = distancia_vertical / distancia_horizontal
-```
-Umbral: EAR < 0.18 indica ojos cerrados
+## Estructura del repositorio
 
-### Mouth Aspect Ratio (MAR)
-```
-MAR = distancia_vertical / distancia_horizontal
-```
-Umbral: MAR > 0.70 indica bostezo
+Proyecto_Embebidos/
+- src/                  Código C (drowsiness_hybrid_final.c)
+- include/              Headers (si aplica)
+- python/               Scripts Python (detector_final_hybrid.py)
+- deployment/           Scripts para la MaixCAM (menu_selector_main.py)
+- docs/                 Resumen, instrucciones y diagramas
+- libs_maixcam/         Librerías/headers de MaixCAM (si se usan)
+- CMakeLists.txt
+- README.md
 
-### Clasificación de Eventos
+La carpeta build/ y los binarios generados (.o, .so) no se incluyen en el repositorio.
 
-| Evento | Criterio | Acción |
-|--------|----------|--------|
-| Parpadeo Normal | < 1.0 seg | +2% somnolencia |
-| Parpadeo Largo | 1.0-2.5 seg | +15% somnolencia |
-| Microsueño | > 2.5 seg | +40% somnolencia |
-| Bostezo | MAR > 0.70 | +10% somnolencia |
+## Compilación de la librería C
 
-### Niveles de Alerta
+Desde la raíz del proyecto:
 
-- **Nivel 0 (0-59%):** Conducción segura
-- **Nivel 1 (60-79%):** Descanso necesario
-- **Nivel 2 (80-100%):** Detener vehículo
+1. Crear carpeta de compilación:
+   - mkdir -p build
+   - cd build
 
-## Compilación
-```bash
-mkdir build && cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=../toolchain-riscv64.cmake ..
-make -j4
-```
+2. Generar archivos de compilación:
+   - cmake ..
 
-**Salida:** `libdrowsiness.so` (ELF 64-bit RISC-V)
+3. Compilar:
+   - make
 
-## Deployment
-```bash
-cd deployment
-./install.sh
-```
+La salida principal es el archivo libdrowsiness.so.
 
-## Licencia
+Para usarla en la cámara, debe compilarse con un compilador RISC-V (dentro del SDK de MaixCAM o con un toolchain RISC-V instalado).
 
-MIT License
+## Despliegue en la MaixCAM
+
+Suponiendo que la cámara está accesible como root@CAM_IP:
+
+- Librería C:
+  scp build/libdrowsiness.so root@CAM_IP:/root/libdrowsiness.so
+
+- Script Python principal:
+  scp python/detector_final_hybrid.py root@CAM_IP:/root/
+
+- Menú selector:
+  scp deployment/menu_selector_main.py root@CAM_IP:/maixapp/apps/menu_selector/main.py
+
+Los modelos .mud deben estar en la cámara, por ejemplo en:
+- /root/models/retinaface.mud
+- /root/models/face_landmarks.mud
+
+## Uso
+
+### Desde el menú táctil
+
+1. Encender la MaixCAM.
+2. Aparece el menú del proyecto.
+3. Tocar el rectángulo central para iniciar el detector.
+4. En pantalla se muestra:
+   - Recuadro del rostro.
+   - Estado, EAR, MAR, parpadeos y bostezos en la esquina superior derecha.
+   - Botón "VOLVER" arriba a la izquierda para regresar al menú.
+
+### Desde consola (SSH)
+
+- ssh root@CAM_IP
+- python3 /root/detector_final_hybrid.py
+
+## Notas
+
+- Los umbrales de EAR/MAR se calibraron de forma empírica.
+- La calidad de la detección depende de la iluminación y del uso de gafas.
+- Los GPIO están previstos para buzzer, LEDs y actuador háptico, pero el cableado depende del montaje físico.
