@@ -4,6 +4,9 @@ Proyecto de sistemas embebidos para detectar somnolencia en un conductor usando 
 
 La cámara captura el rostro, se calculan métricas de ojos y boca y se estima un nivel de peligro. La parte crítica está en C (librería compartida) y Python se usa para integrar cámara, modelos y pantalla táctil.
 
+**Presentado por:**
+*Jaime A. Jiménez Naranjo, Miguel Alejandro Carvajal Medina, Daniel Sierra Peña*
+
 ## Arquitectura
 
 - MaixCAM Pro con Linux 5.10.
