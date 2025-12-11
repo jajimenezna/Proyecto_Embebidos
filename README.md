@@ -7,6 +7,13 @@ La cámara captura el rostro, se calculan métricas de ojos y boca y se estima u
 **Presentado por:**
 *Jaime A. Jiménez Naranjo, Miguel Alejandro Carvajal Medina, Daniel Sierra Peña*
 
+## Contexto y motivación
+
+La somnolencia al volante es un problema frecuente en conductores que manejan durante trayectos largos o en horarios de madrugada. No siempre es fácil para la persona darse cuenta de que está entrando en un estado de fatiga, y cuando reacciona muchas veces ya es tarde.
+
+La idea de este proyecto es aprovechar la MaixCAM Pro como plataforma embebida de bajo consumo para monitorear en tiempo real el rostro del conductor. A partir de la apertura de los ojos y de la boca, el sistema identifica patrones de parpadeo, microsueños y bostezos que se asocian con somnolencia. La meta no es solo “detectar una cara”, sino dar una señal clara de estado (normal, alerta o peligro) que pueda usarse para activar avisos sonoros, visuales o hápticos.
+
+
 ## Arquitectura
 
 - MaixCAM Pro con Linux 5.10.
