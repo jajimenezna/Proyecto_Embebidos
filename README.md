@@ -91,12 +91,12 @@ En la MaixCAM se ejecutó:
 
 La salida fue:
 
-    Linux maixcam-cbce 5.10.4-tag- #19 PREEMPT Wed Mar 19 15:08:48 CST 2025 riscv64 GNU/Linux
+    Linux maixcam-cbce 5.10.4-tag- #19 PREEMPT Wed Oct 19 15:08:48 CST 2025 riscv64 GNU/Linux
 
 Esto confirma que:
 - El kernel es 5.10.4 para arquitectura riscv64.
 - Se trata del build número 19 (#19), no de una imagen de fábrica.
-- La fecha de compilación (Wed Mar 19 15:08:48 CST 2025) coincide con el momento en que se reconstruyó el sistema usando el SDK.
+- La fecha de compilación (Wed Oct 19 15:08:48 CST 2025) coincide con el momento en que se reconstruyó el sistema usando el SDK.
 
 ### 2. Rootfs basado en Buildroot
 
@@ -122,7 +122,7 @@ Para ver más detalles del kernel se usó:
 
 Entre las primeras líneas aparece:
 
-    Linux version 5.10.4-tag- (neucrack@neucrack-desktop) (riscv64-unknown-linux-musl-gcc (Xuantie-900 linux-5.10.4 musl gcc Toolchain V2.6.1 B-20220906) 10.2.0, GNU ld (GNU Binutils) 2.35) #19 PREEMPT Wed Mar 19 15:08:48 CST 2025
+    Linux version 5.10.4-tag- (neucrack@neucrack-desktop) (riscv64-unknown-linux-musl-gcc (Xuantie-900 linux-5.10.4 musl gcc Toolchain V2.6.1 B-20220906) 10.2.0, GNU ld (GNU Binutils) 2.35) #19 PREEMPT Wed Oct 19 15:08:48 CST 2025
 
 Con esto se confirma que:
 - El kernel fue construido con el toolchain Xuantie-900 usado por el SDK.
