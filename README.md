@@ -131,6 +131,112 @@ Con esto se confirma que:
 
 En conjunto, estos comandos demuestran que la MaixCAM está ejecutando un kernel y un rootfs generados a partir del SDK de Sophgo/Sipeed para sg2002_maixcam, y no una imagen genérica de fábrica.
 
+## Procesamiento interno en la NPU y pipeline del SG2002
+
+El SG2002 integra un procesador RISC-V C906, coprocesadores de imagen y una NPU de 1 TOPS. El sistema aprovecha estos bloques para ejecutar la detección de somnolencia en tiempo real sin sobrecargar la CPU. A continuación se describe el flujo de datos y cómo funciona internamente el chip en este proyecto.
+
+### 1. Captura y preprocesamiento de imagen
+
+La cámara entrega cada cuadro por MIPI-CSI. Antes de llegar a la aplicación, la imagen pasa por varios módulos del SoC:
+
+- **ISP:** ajusta exposición, balance de blancos y convierte Bayer a RGB.
+- **DWA/VIC:** realiza escalado y conversiones necesarias para los modelos.
+
+Estas etapas se realizan en hardware, de modo que la CPU recibe imágenes ya procesadas y listas para inferencia.
+
+### 2. Carga de modelos para ejecución en la NPU
+
+Los modelos `.mud` (RetinaFace y FaceLandmarks) se cargan a la DDR mediante el runtime de MaixCAM. Este proceso configura:
+
+1. Buffers de entrada y salida.
+2. Regiones DMA para mover tensores entre memoria y la NPU.
+3. Estructuras internas necesarias para inferencias sucesivas.
+
+La NPU queda lista para ejecutar cada red sin intervención del CPU más allá de la orden de inicio.
+
+### 3. Inferencia en la NPU
+
+Cuando la aplicación ejecuta:
+
+`faces = retinaface.detect(img)`
+
+
+la NPU realiza:
+
+1. Copia del frame al buffer de entrada por DMA.
+2. Ejecución capa por capa de la red en INT8.
+3. Escritura de los resultados (bounding box y landmarks básicos) en memoria.
+
+El mismo flujo aplica para el modelo de 478 puntos faciales. La CPU únicamente toma los resultados ya postprocesados.
+
+### 4. Rol del CPU (RISC-V C906)
+
+La CPU no realiza IA. Su función es coordinar:
+
+- Lectura de frames desde cámara.
+- Llamado a los modelos ejecutados en NPU.
+- Comunicación con el módulo C (EAR/MAR, parpadeos, bostezos).
+- Renderizado de la interfaz gráfica.
+- Manejo de pantalla táctil.
+- Gestión del menú de aplicaciones.
+
+Gracias a esto, el sistema mantiene una velocidad estable cercana a 30 FPS.
+
+### 5. Procesamiento facial y lógica de somnolencia en C
+
+Los landmarks generados por la NPU se envían al módulo C mediante CTypes. Allí se calculan:
+
+- EAR (Eye Aspect Ratio)
+- MAR (Mouth Aspect Ratio)
+- Parpadeos, cierres prolongados y su duración
+- Bostezos confirmados
+
+El módulo C clasifica el estado del conductor:
+
+- **0 – Normal**
+- **1 – Alerta**
+- **2 – Peligro**
+
+La lógica en C mantiene coherencia temporal, contadores internos y evita falsos positivos.
+
+### 6. Interfaz visual y supervisión táctil
+
+Python dibuja:
+
+- Estado (normal/alerta/peligro)
+- EAR/MAR actual
+- Recuadro del rostro
+- Conteo de parpadeos y bostezos
+- Botón para volver al menú principal
+
+En paralelo, supervisa la pantalla táctil. Si el usuario toca la zona definida, se cierra la aplicación y se retorna al selector inicial.
+
+### 7. Señales externas y GPIO
+
+El diseño contempla la activación de GPIO desde C para conectar:
+
+- Buzzer
+- LEDs tipo semáforo
+- Actuador háptico
+
+Aunque no se usaron físicamente en esta entrega, la estructura del código y del módulo C queda preparada para generar señales de alerta externas sin depender de Python.
+
+### 8. Resumen general del pipeline
+
+1. La cámara captura un frame y el hardware de imagen lo procesa.
+2. Python recibe el frame.
+3. RetinaFace (NPU) detecta el rostro.
+4. FaceLandmarks (NPU) calcula los 478 puntos.
+5. Los landmarks pasan al módulo C.
+6. El módulo C calcula EAR/MAR y los eventos fisiológicos.
+7. Se determina el estado del conductor.
+8. Python muestra la interfaz gráfica.
+9. El módulo C puede activar GPIO externos si se requiere.
+10. El sistema repite el ciclo continuamente en tiempo real.
+
+Este pipeline permite que la MaixCAM ejecute detección avanzada de somnolencia de forma estable y eficiente, utilizando al máximo la NPU del SG2002 y delegando la lógica principal al módulo C.
+
+
 
 ## Arquitectura
 
